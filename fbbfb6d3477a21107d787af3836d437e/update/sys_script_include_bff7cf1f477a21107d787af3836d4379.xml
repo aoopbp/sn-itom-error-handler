@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_965320_itom_err.ITOMTaskUtils</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <name>ITOMTaskUtils</name>
+        <script><![CDATA[var ITOMTaskUtils = Class.create();
+ITOMTaskUtils.prototype = {
+
+    createNewTask: function (current, shortMsg, descMsg, priorityNum) {
+
+        var targetTable = "sa_error_handler_task";
+        var targetGroup = "f53d408c1b43c418261c63923b4bcbc5"; //
+
+        var newTask = new GlideRecord(targetTable);
+        newTask.addEncodedQuery('priority=' + priorityNum + '^stateIN-5,1,2^cmdb_ci=' + current.sys_id);
+        newTask.query();
+
+        if (!newTask.next()) {
+
+            newTask.initialize();
+            newTask.setValue("short_description", shortMsg);
+            newTask.setValue("description", descMsg);
+            newTask.setValue("assignment_group", targetGroup);
+            newTask.setValue("priority", priorityNum);
+            newTask.setValue("cmdb_ci", current.sys_id);
+            var wasInserted = newTask.insert();
+            if (!wasInserted) {
+                var errMsg = "Falha ao criar registro em " + targetTable + ". Erro: " + newTask.getErrorMsg();
+                gs.log(errMsg, "BR retroalimentação CMDB");
+            }
+        }
+    },
+
+    type: 'ITOMTaskUtils'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-05-19 21:52:06</sys_created_on>
+        <sys_id>bff7cf1f477a21107d787af3836d4379</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>ITOMTaskUtils</sys_name>
+        <sys_package display_value="ITOM Error Handler" source="x_965320_itom_err">fbbfb6d3477a21107d787af3836d437e</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="ITOM Error Handler">fbbfb6d3477a21107d787af3836d437e</sys_scope>
+        <sys_update_name>sys_script_include_bff7cf1f477a21107d787af3836d4379</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-05-19 23:22:31</sys_updated_on>
+    </sys_script_include>
+</record_update>

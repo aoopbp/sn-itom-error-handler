@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update sys_domain="global" table="sys_script">
+    <sys_script action="INSERT_OR_UPDATE">
+        <abort_action>false</abort_action>
+        <access>package_private</access>
+        <action_delete>false</action_delete>
+        <action_insert>false</action_insert>
+        <action_query>false</action_query>
+        <action_update>true</action_update>
+        <active>true</active>
+        <add_message>false</add_message>
+        <advanced>true</advanced>
+        <change_fields>false</change_fields>
+        <client_callable>false</client_callable>
+        <collection>cmdb_ci_server</collection>
+        <condition/>
+        <description/>
+        <execute_function>false</execute_function>
+        <filter_condition table="cmdb_ci_server">install_statusCHANGESFROM1^install_statusCHANGESTO7^EQ<item display_value="Installed" endquery="false" field="install_status" goto="false" newquery="false" operator="CHANGESFROM" or="false" value="1"/>
+            <item display_value="Retired" endquery="false" field="install_status" goto="false" newquery="false" operator="CHANGESTO" or="false" value="7"/>
+            <item endquery="true" field="" goto="false" newquery="false" operator="=" or="false" value=""/>
+        </filter_condition>
+        <is_rest>false</is_rest>
+        <message/>
+        <name>IC's verification after retire action</name>
+        <order>100</order>
+        <priority>100</priority>
+        <rest_method/>
+        <rest_method_text/>
+        <rest_service/>
+        <rest_service_text/>
+        <rest_variables/>
+        <role_conditions/>
+        <script><![CDATA[(function executeRule(current, previous /*null when async*/ ) {
+
+    if (!current.ip_address) {
+        var msgErr = "Falha ao executar Business Rule 'CMDB BR retire rules for ICs'." +
+            "\n- Error: IC sem IP.\n- IC: " + current.getValue('name');
+
+        gs.log(msgErr, "BR retroalimentacao CMDB");
+        return;
+    }
+
+    var srcDiscovery = new Discovery();
+    var newTask;
+    var shortMsg;
+    var descMsg;
+    var priorityNum;
+
+    var arrIP = [];
+    arrIP.push(current.ip_address);
+    var objSchedule = srcDiscovery.getScheduleContainingAnyIP(arrIP);
+
+    if (objSchedule && objSchedule.schedule.valid) {
+
+        var grErrDiscovery = new GlideRecord('automation_error_msg');
+        grErrDiscovery.addEncodedQuery('status=0^application=d5069fe9e70332001a310a6103f6a94b');
+        grErrDiscovery.query();
+
+        if (grErrDiscovery.find("host", current.ip_address)) {
+
+            newTask = new ITOMTaskUtils();
+
+            shortMsg = "Tarefa aberta automaticamente após identificar que o IC " + current.ip_address +
+                " foi retirado com tarefas de Discovery pendentes.";
+
+            descMsg = "Erro de Discover em aberto: " +
+                grErrDiscovery.getDisplayValue("error_code");
+
+            priorityNum = 2;
+
+            newTask.createNewTask(current, shortMsg, descMsg, priorityNum);
+        }
+    } else {
+
+        var objRange = null;
+        var rangeUtils = new IPRangeUtils();
+        objRange = rangeUtils.findIPExact(current.ip_address);
+
+        if (objRange) {
+            newTask = new ITOMTaskUtils();
+
+            shortMsg = "Tarefa aberta automaticamente após identificar que o IC " + current.ip_address +
+                " foi retirado com tarefas de Discovery pendentes.";
+
+            descMsg = "Erro: range desativado e/ou sem schedule.\n\n-- Resumo --" +
+                "\nRange: " + objRange.range +
+                "\nMaior IP: " + objRange.highest_ip +
+                "\nAtivo: " + objRange.status +
+                "\nDiscovery range: " + objRange.disc_range;
+
+            priorityNum = 1;
+
+            newTask.createNewTask(current, shortMsg, descMsg, priorityNum);
+            return;
+        }
+
+        var arr_aux = rangeUtils.createArrIP(current.ip_address);
+
+        for (var i = 0; i < arr_aux.length; i++) {
+            objRange = rangeUtils.findIPRange(current.ip_address, arr_aux[i]);
+
+            if (objRange) {
+
+                newTask = new ITOMTaskUtils();
+
+                shortMsg = "Tarefa aberta automaticamente após identificar que o IC " + current.ip_address +
+                    " foi retirado com tarefas de Discovery pendentes.";
+
+                descMsg = "Erro: range desativado e/ou sem schedule.\n\n-- Resumo --" +
+                    "\nRange: " + objRange.range +
+                    "\nMaior IP: " + objRange.highest_ip +
+                    "\nAtivo: " + objRange.status +
+                    "\nDiscovery range: " + objRange.disc_range;
+
+                priorityNum = 1;
+
+                newTask.createNewTask(current, shortMsg, descMsg, priorityNum);
+                return;
+            }
+        }
+        newTask = new ITOMTaskUtils();
+
+        shortMsg = "Tarefa aberta automaticamente após identificar que o IC " + current.ip_address +
+            " foi retirado com tarefas de Discovery pendentes.";
+
+        descMsg = "Não encontrado range de IP do IC " + current.ip_address +
+            " retirado na tabela Discovery IP Range.";
+
+        priorityNum = 1;
+
+        newTask.createNewTask(current, shortMsg, descMsg, priorityNum);
+        return;
+    }
+})(current, previous);]]></script>
+        <sys_class_name>sys_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2023-05-19 21:55:05</sys_created_on>
+        <sys_domain>global</sys_domain>
+        <sys_domain_path>/</sys_domain_path>
+        <sys_id>eba8875f477a21107d787af3836d43f2</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>IC's verification after retire action</sys_name>
+        <sys_overrides/>
+        <sys_package display_value="ITOM Error Handler" source="x_965320_itom_err">fbbfb6d3477a21107d787af3836d437e</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="ITOM Error Handler">fbbfb6d3477a21107d787af3836d437e</sys_scope>
+        <sys_update_name>sys_script_eba8875f477a21107d787af3836d43f2</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2023-05-19 23:15:41</sys_updated_on>
+        <template/>
+        <when>after</when>
+    </sys_script>
+    <sys_translated_text action="delete_multiple" query="documentkey=eba8875f477a21107d787af3836d43f2"/>
+</record_update>
